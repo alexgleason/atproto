@@ -2,12 +2,17 @@ import { CID } from 'multiformats/cid'
 import { z } from 'zod'
 import { Def } from './check'
 
-const cidSchema = z
-  .any()
-  .refine((obj: unknown) => CID.asCID(obj) !== null, {
-    message: 'Not a CID',
-  })
-  .transform((obj: unknown) => CID.asCID(obj) as CID)
+const cidSchema = z.object({}).transform((obj, ctx) => {
+  try {
+    return CID.parse(String(obj))
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Not a CID',
+    })
+    return z.NEVER
+  }
+})
 
 export const schema = {
   cid: cidSchema,
